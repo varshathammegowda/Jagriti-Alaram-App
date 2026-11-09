@@ -1,0 +1,2 @@
+import {Router} from 'express';import protect from '../middleware/authMiddleware.js';import asyncHandler from '../utils/asyncHandler.js';import * as c from '../controllers/reminderController.js';
+const r=Router();r.use(protect);r.get('/',asyncHandler(c.list));r.post('/',asyncHandler(c.create));r.patch('/:id/complete',asyncHandler(c.complete));r.get('/:id',asyncHandler(c.get));r.put('/:id',asyncHandler(c.update));r.delete('/:id',asyncHandler(c.remove));export default r;

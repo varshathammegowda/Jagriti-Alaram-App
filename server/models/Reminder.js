@@ -1,0 +1,3 @@
+import mongoose from 'mongoose';
+const reminderSchema = new mongoose.Schema({ userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true }, title: { type: String, required: true, trim: true, maxlength: 120 }, description: { type: String, trim: true, maxlength: 500, default: '' }, date: { type: Date, required: true }, time: { type: String, required: true }, repeat: { type: String, default: 'Once' }, priority: { type: String, enum: ['Low','Medium','High'], default: 'Medium' }, completed: { type: Boolean, default: false } }, { timestamps: true });
+export default mongoose.model('Reminder', reminderSchema);

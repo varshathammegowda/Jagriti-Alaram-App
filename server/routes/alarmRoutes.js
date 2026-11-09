@@ -1,0 +1,2 @@
+import {Router} from 'express';import protect from '../middleware/authMiddleware.js';import asyncHandler from '../utils/asyncHandler.js';import * as c from '../controllers/alarmController.js';
+const r=Router();r.use(protect);r.get('/',asyncHandler(c.list));r.post('/',asyncHandler(c.create));r.post('/:id/activity',asyncHandler(c.activity));r.post('/:id/challenge-results',asyncHandler(c.challengeResult));r.patch('/:id/toggle',asyncHandler(c.toggle));r.get('/:id',asyncHandler(c.get));r.put('/:id',asyncHandler(c.update));r.delete('/:id',asyncHandler(c.remove));export default r;

@@ -1,0 +1,2 @@
+import {Router} from 'express';import protect from '../middleware/authMiddleware.js';import asyncHandler from '../utils/asyncHandler.js';import {updateProfile,clearData,deleteAccount} from '../controllers/userController.js';
+const r=Router();r.use(protect);r.put('/profile',asyncHandler(updateProfile));r.delete('/data/:type',asyncHandler(clearData));r.delete('/account',asyncHandler(deleteAccount));export default r;

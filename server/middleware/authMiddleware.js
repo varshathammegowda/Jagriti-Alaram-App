@@ -1,0 +1,3 @@
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+export default async function protect(req,res,next) { try { const token = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null; if (!token) return res.status(401).json({success:false,message:'Authentication required'}); const {id}=jwt.verify(token,process.env.JWT_SECRET); const user=await User.findById(id); if(!user) return res.status(401).json({success:false,message:'User no longer exists'}); req.user=user; next(); } catch { res.status(401).json({success:false,message:'Invalid or expired token'}); } }
