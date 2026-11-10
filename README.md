@@ -21,7 +21,7 @@ Node.js 20+ and MongoDB (local or Atlas).
 2. Run `npm install`, `npm --prefix server install`, and `npm --prefix client install`.
 3. Run `npm run dev` from the project root. API is on port 5000; Vite is on 5173.
 
-`CLIENT_URL` controls the allowed browser origin. No database or production JWT secret is included in this repository.
+`CLIENT_URL` controls the allowed browser origin and accepts a comma-separated list. During local development, private-network frontend origins on Vite ports 5173 and 5174 are allowed so the app can be opened from another device on the same Wi-Fi. The client uses the current page's hostname for the API by default; set `VITE_API_URL` when frontend and API use different hosts in production. No database or production JWT secret is included in this repository.
 
 ## Dance challenge and music rights
 The Dance challenge always plays `client/public/audio/jagriti-dance-track.wav`; users cannot choose, upload, or link songs. This short loop is an original procedural synth track generated specifically for Jagriti, with no third-party samples or recordings. Its source and authorship note are in `client/public/audio/README.md`.
