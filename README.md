@@ -1,38 +1,297 @@
-# Jagriti
+# 🌅 Jagriti – Smart Alarm & Reminder App
 
-Smart alarm and reminder application. Wake. Remember. Grow.
+> **Wake. Remember. Grow.**
 
-## Features
-- JWT registration and login with hashed passwords
-- User-owned alarms with repeating schedules, sound, snooze, vibration and mission settings
-- Sequential wake-up challenges: Math, Memory, Walk, Dance, Speaking, Custom, plus camera-counted Squats, Push-ups, and Jumping Jacks
-- Per-alarm physical activity targets (15 reps by default) and challenge completion records in MongoDB
-- Reminder CRUD, completion and priority
-- Alarm activity tracking and insights based on real activity data
-- Sleep goal calculator, account settings and appearance preferences
-- Responsive React interface with browser notifications when permitted
+Jagriti is a full-stack smart alarm and reminder application designed to make waking up more engaging and productive.
 
-Web alarms can only run while the app is open in a browser tab. Browser/device shutdown cannot guarantee alarm delivery. A future native Android client can use platform alarm APIs against the same API.
+Instead of simply dismissing an alarm, Jagriti allows users to complete different **wake-up challenges**, including mathematical problems, memory tasks, walking, dancing, speaking, custom activities, and camera-based physical exercises such as **Squats, Push-ups, and Jumping Jacks**.
 
-## Requirements and setup
-Node.js 20+ and MongoDB (local or Atlas).
+The application combines **React, Node.js, Express.js, MongoDB, JWT authentication, and MediaPipe computer vision** to provide an interactive alarm experience.
 
-1. Copy `.env.example` to `server/.env` and set `MONGO_URI` and a strong `JWT_SECRET`.
-2. Run `npm install`, `npm --prefix server install`, and `npm --prefix client install`.
-3. Run `npm run dev` from the project root. API is on port 5000; Vite is on 5173.
+---
 
-`CLIENT_URL` controls the allowed browser origin and accepts a comma-separated list. During local development, private-network frontend origins on Vite ports 5173 and 5174 are allowed so the app can be opened from another device on the same Wi-Fi. The client uses the current page's hostname for the API by default; set `VITE_API_URL` when frontend and API use different hosts in production. No database or production JWT secret is included in this repository.
+## ✨ Features
 
-## Dance challenge and music rights
-The Dance challenge always plays `client/public/audio/jagriti-dance-track.wav`; users cannot choose, upload, or link songs. This short loop is an original procedural synth track generated specifically for Jagriti, with no third-party samples or recordings. Its source and authorship note are in `client/public/audio/README.md`.
+### 🔐 Authentication
+- User registration and login
+- JWT-based authentication
+- Password hashing
+- Protected API routes
+- User-specific alarms and reminders
 
-Dance uses the Apache-2.0 `@mediapipe/tasks-vision` package and the MediaPipe Pose Landmarker Lite model. Pose inference runs on the user's device. The web app downloads the MediaPipe WASM runtime from jsDelivr and the model from Google's MediaPipe model storage when the challenge starts, so an internet connection is required for the first load. Camera permission is required; captured frames are not uploaded by Jagriti. MediaPipe may send product usage metrics as described by its privacy notice.
+### ⏰ Smart Alarms
+- Create, edit, delete, and toggle alarms
+- Repeating alarm schedules
+- Custom alarm sound
+- Snooze functionality
+- Vibration support
+- Configurable wake-up missions
+- Alarm activity tracking
 
-Physical activity challenges use MediaPipe body landmarks locally in the browser. Squats count a visible knee-angle transition from standing to a low position and back; Push-ups count elbow bend/extension while the shoulders and hips remain aligned; Jumping Jacks count the arms-and-legs-apart cycle back to a together position. Visibility, angle, and cycle-duration thresholds are adjustable in `client/src/utils/poseRepetitions.js`. The browser sends only a challenge result (type, target, count, duration, score, and detection method) to the authenticated API. Result records are stored in the existing `AlarmActivity` collection and physical totals appear in Insights. The backend checks that each result matches the alarm's configured challenge and target and will reject completion of an alarm session until every configured challenge has a result.
+### 🧠 Wake-Up Challenges
 
-Walk uses device motion data where the browser exposes it; the step count is a lightweight sensor heuristic, not a medical-grade pedometer. Speaking uses the browser SpeechRecognition API where available; support varies by browser, and speech recognition may use the browser provider's service. Jagriti stores speaking duration, not the transcript. Custom activities use a user-named timer and are self-guided.
+Users can configure challenges that must be completed to finish an alarm:
 
-Pose thresholds and browser sensor behavior still need hands-on testing with a real camera and representative mobile devices. Camera challenges require camera permission and a secure context (localhost or HTTPS). Users should keep their whole body visible and use a clear, well-lit space.
+- ➗ **Math** – Solve mathematical problems
+- 🧩 **Memory** – Complete memory-based challenges
+- 🚶 **Walk** – Complete a movement/step-based challenge
+- 💃 **Dance** – Follow a dance activity
+- 🎤 **Speaking** – Complete a speaking challenge
+- 📝 **Custom** – User-defined activity
+- 🏋️ **Squats** – Camera-based repetition counting
+- 💪 **Push-ups** – Camera-based repetition counting
+- 🤸 **Jumping Jacks** – Camera-based repetition counting
 
-## API
-`/api/auth` register, login, me; `/api/alarms` alarm CRUD and toggle, alarm activity, and authenticated challenge-result recording; `/api/reminders` reminder CRUD and complete; `/api/insights` activity-backed statistics; `/api/users` profile/settings and data clear operations. All resource routes require `Authorization: Bearer <token>`.
+Physical activities have configurable targets, with **15 repetitions as the default target**.
+
+---
+
+## 🏋️ Computer Vision-Based Exercise Tracking
+
+Jagriti uses **MediaPipe Pose Landmarker** to detect body landmarks directly in the browser.
+
+The system analyzes body movements to count exercise repetitions.
+
+### Squats
+The application detects a transition from:
+
+**Standing → Low Position → Standing**
+
+using knee-angle changes.
+
+### Push-ups
+The application analyzes:
+
+- Elbow bending
+- Elbow extension
+- Shoulder and hip alignment
+
+to identify push-up repetitions.
+
+### Jumping Jacks
+The system detects the movement cycle:
+
+**Arms & Legs Together → Arms & Legs Apart → Together**
+
+to count repetitions.
+
+Pose detection runs locally in the browser, and captured camera frames are **not uploaded by Jagriti**.
+
+---
+
+## 💃 Dance Challenge
+
+The Dance challenge uses a built-in original procedural synth track.
+
+Users cannot upload or select external songs.
+
+The application uses:
+
+- MediaPipe Pose Landmarker
+- Browser camera
+- Local pose processing
+- Original Jagriti dance track
+
+The dance track is available at:
+
+```text
+client/public/audio/jagriti-dance-track.wav
+```
+
+---
+
+## 📊 Activity Tracking & Insights
+
+Jagriti records completed challenge results and provides activity-based insights.
+
+The system tracks information such as:
+
+- Challenge type
+- Target repetitions
+- Completed repetitions
+- Duration
+- Score
+- Detection method
+- Alarm activity
+
+Physical activity totals can be viewed through the **Insights** section.
+
+---
+
+## 📝 Reminders
+
+Users can manage personal reminders through:
+
+- Create reminder
+- Edit reminder
+- Delete reminder
+- Mark reminder as completed
+- Set priority
+
+---
+
+## 😴 Sleep Goal Calculator
+
+Jagriti also provides a sleep goal calculator to help users plan their sleep and wake-up schedule.
+
+---
+
+## ⚙️ Settings
+
+Users can manage:
+
+- Account settings
+- Profile information
+- Appearance preferences
+- Application settings
+- User data
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- React
+- Vite
+- JavaScript
+- HTML5
+- CSS
+- MediaPipe Tasks Vision
+- Browser APIs
+
+### Backend
+- Node.js
+- Express.js
+- JWT
+- REST APIs
+- bcrypt/password hashing
+
+### Database
+- MongoDB
+- MongoDB Atlas
+
+### Computer Vision
+- MediaPipe Pose Landmarker
+- MediaPipe Tasks Vision
+- Browser Camera API
+
+### Development Tools
+- Git
+- GitHub
+- npm
+
+---
+
+## 🏗️ Project Structure
+
+```text
+Jagriti-Alaram-App/
+│
+├── client/
+│   ├── public/
+│   │   └── audio/
+│   │       └── jagriti-dance-track.wav
+│   │
+│   └── src/
+│       ├── components/
+│       ├── hooks/
+│       ├── utils/
+│       │   └── poseRepetitions.js
+│       └── ...
+│
+├── server/
+│   ├── models/
+│   ├── routes/
+│   ├── controllers/
+│   └── ...
+│
+├── .env.example
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Make sure you have installed:
+
+- **Node.js 20+**
+- **MongoDB** or a MongoDB Atlas database
+- Git
+
+---
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/varshathammegowda/Jagriti-Alaram-App.git
+```
+
+Move into the project:
+
+```bash
+cd Jagriti-Alaram-App
+```
+
+---
+
+### 2. Configure Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example server/.env
+```
+
+Then configure your MongoDB connection and JWT secret.
+
+Example:
+
+```env
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_strong_secret
+```
+
+Do **not** commit your actual `.env` file to GitHub.
+
+---
+
+### 3. Install Dependencies
+
+Install root dependencies:
+
+```bash
+npm install
+```
+
+Install backend dependencies:
+
+```bash
+npm --prefix server install
+```
+
+Install frontend dependencies:
+
+```bash
+npm --prefix client install
+```
+
+---
+
+### 4. Start the Application
+
+From the project root:
+
+```bash
+npm run dev
+```
+
+The application will run with:
+
+```text
+Frontend: http://localhost:5173
+Backend:  http://localhost
