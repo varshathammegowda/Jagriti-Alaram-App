@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, Check, Music2, Play } from 'lucide-react';
 import '../dance.css';
+import drawPoseLandmarks from '../utils/drawPoseLandmarks';
 
 const MUSIC_SRC = '/audio/jagriti-dance-track.wav';
 const MODEL_SRC = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
@@ -10,7 +11,7 @@ const visible = point => point && (point.visibility ?? 1) > 0.45;
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 export default function DanceChallenge({ duration = 60, onComplete }) {
-  const videoRef = useRef(null), audioRef = useRef(null), streamRef = useRef(null), landmarkerRef = useRef(null), rafRef = useRef(0);
+  const videoRef = useRef(null), canvasRef = useRef(null), audioRef = useRef(null), streamRef = useRef(null), landmarkerRef = useRef(null), rafRef = useRef(0);
   const previousRef = useRef(null), activeRef = useRef(0), lastFrameRef = useRef(0), lastMoveRef = useRef(0), trackedRef = useRef(0), movingRef = useRef(0);
   const [state, setState] = useState('ready');
   const [remaining, setRemaining] = useState(duration);
@@ -24,6 +25,7 @@ export default function DanceChallenge({ duration = 60, onComplete }) {
     cancelAnimationFrame(rafRef.current);
     streamRef.current?.getTracks().forEach(track => track.stop()); streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
+    drawPoseLandmarks(canvasRef.current, videoRef.current, null);
     landmarkerRef.current?.close(); landmarkerRef.current = null;
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
   }, []);
@@ -46,6 +48,7 @@ export default function DanceChallenge({ duration = 60, onComplete }) {
         if (!videoRef.current || !landmarkerRef.current || videoRef.current.readyState < 2) { rafRef.current = requestAnimationFrame(analyze); return; }
         const elapsed = Math.min(0.15, Math.max(0, (now - lastFrameRef.current) / 1000)); lastFrameRef.current = now;
         const result = landmarkerRef.current.detectForVideo(videoRef.current, now), pose = result.landmarks?.[0]; let bodyPresent = false;
+        drawPoseLandmarks(canvasRef.current, videoRef.current, pose || null);
         if (pose) {
           const points = [11,12,13,14,15,16,23,24,25,26,27,28].map(i => pose[i]);
           const body = points.filter(visible).length >= 8; bodyPresent = body;
@@ -77,7 +80,7 @@ export default function DanceChallenge({ duration = 60, onComplete }) {
   return <section className="dance-challenge">
     <audio ref={audioRef} src={MUSIC_SRC} loop preload="auto" />
     <div className="dance-heading"><div className="dance-mark">💃</div><p className="eyebrow">DANCE CHALLENGE</p><h2>{completed ? 'Dance complete!' : state === 'ready' || state === 'starting' ? 'Get up and dance!' : 'Keep dancing!'}</h2><p>{completed ? 'You stayed active for the full challenge.' : 'Move your arms, legs, or body to keep the timer moving.'}</p></div>
-    <div className="dance-stage"><video ref={videoRef} muted playsInline className={state === 'ready' || state === 'starting' ? 'camera-preview hidden' : 'camera-preview'} /><div className="dance-stage-overlay"><div className="dance-time">{fmt(completed ? duration : remaining)}</div><div className="dance-track-label"><Music2 size={15}/> Music {state === 'active' || state === 'paused' ? 'is playing' : 'ready'} · Jagriti Dance Track</div></div></div>
+    <div className="dance-stage"><video ref={videoRef} muted playsInline className={state === 'ready' || state === 'starting' ? 'camera-preview hidden' : 'camera-preview'} /><canvas ref={canvasRef} className="pose-landmark-overlay" aria-hidden="true"/><div className="dance-stage-overlay"><div className="dance-time">{fmt(completed ? duration : remaining)}</div><div className="dance-track-label"><Music2 size={15}/> Music {state === 'active' || state === 'paused' ? 'is playing' : 'ready'} · Jagriti Dance Track</div></div></div>
     <div className="dance-metrics"><span><Camera size={15}/> Camera: <b>{state === 'active' || state === 'paused' ? 'ON' : 'Ready'}</b></span><span>Body: <b>{metrics.body ? 'Detected' : 'Waiting...'}</b></span><span>Arms: <b>{metrics.arms ? 'Moving' : 'Waiting...'}</b></span><span>Legs: <b>{metrics.legs ? 'Moving' : 'Waiting...'}</b></span></div>
     <div className="dance-progress"><div><span>Active movement</span><b>{Math.round((duration - remaining) / duration * 100)}%</b></div><div className="dance-progress-track"><i style={{ width: `${Math.max(0, Math.min(100, (duration - remaining) / duration * 100))}%` }}/></div><small>{metrics.moving ? 'Movement detected ✓' : state === 'active' || state === 'paused' ? 'Move to continue your active time' : 'Movement Detection: Waiting...'}</small></div>
     {error && <div className="form-error">{error}</div>}

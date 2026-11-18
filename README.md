@@ -8,9 +8,47 @@ Instead of simply dismissing an alarm, Jagriti allows users to complete differen
 
 The application combines **React, Node.js, Express.js, MongoDB, JWT authentication, and MediaPipe computer vision** to provide an interactive alarm experience.
 
+<<<<<<< HEAD
 ---
 
 ## ✨ Features
+=======
+1. Copy `server/.env.example` to `server/.env` and set `MONGO_URI` and a strong `JWT_SECRET`.
+2. Run `npm install` in the root, `server`, and `client` directories.
+3. Run `npm run dev` from the project root. API is on port 5000; Vite is on 5173.
+
+The frontend sends API requests through the shared Axios client in `client/src/services/api.js`. Set `VITE_API_URL` to the backend API base URL ending in `/api` (for example, `https://your-render-service.onrender.com/api`). `client/.env.example` shows a local value; copy it to `client/.env.local` for local use. Vite embeds this value in the frontend build, so configure it in Vercel before deploying or rebuilding.
+
+`CLIENT_URL` controls allowed browser origins and accepts a comma-separated list. In production, set it to the exact Vercel frontend origin (for example, `https://your-app.vercel.app`, without a trailing slash). Local development allows Vite origins on ports 5173 and 5174. The server requires `MONGO_URI` and `JWT_SECRET` and exits with an error if required production configuration is missing.
+
+## Production deployment
+
+### Render backend
+
+- Create a **Web Service** from this repository.
+- Root Directory: `server`
+- Runtime: **Node**
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Health Check Path: `/api/health`
+- Environment: `NODE_ENV=production`, `CLIENT_URL=https://your-app.vercel.app`, `MONGO_URI=<Atlas connection string>`, and `JWT_SECRET=<long random secret>`.
+- Do not set `PORT`; Render supplies it. The app listens on `0.0.0.0` and uses `process.env.PORT` (with 5000 as its local default).
+
+### Vercel frontend
+
+- Import this repository as a Vercel project.
+- Root Directory: `client`
+- Framework Preset: **Vite**
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Environment Variable: `VITE_API_URL=https://<your-render-service>.onrender.com/api` for Production (and Preview if preview deployments should reach the same API).
+
+`client/vercel.json` rewrites browser route requests to the SPA entry point so React Router deep links work after refresh. After the first deployment, update Render's `CLIENT_URL` to the actual Vercel production origin. If using a custom domain, include that exact origin too (comma separated).
+
+### MongoDB Atlas
+
+Create a database user with a strong password, add Render's outbound IP access or use Atlas's network access option appropriate for the Render plan, and use the Atlas `mongodb+srv://` URI as `MONGO_URI`. Ensure the URI's database name is set (for example, `/jagriti`) and URL-encode special characters in the username or password. Never put this URI in a Vite variable or commit it.
+>>>>>>> e396bdb (Changes)
 
 ### 🔐 Authentication
 - User registration and login

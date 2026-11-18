@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import drawPoseLandmarks from '../utils/drawPoseLandmarks';
 
 const MODEL_SRC = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
 const WASM_SRC = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm';
 
 export default function usePoseDetector(enabled, onPose) {
-  const videoRef = useRef(null), onPoseRef = useRef(onPose);
+  const videoRef = useRef(null), canvasRef = useRef(null), onPoseRef = useRef(onPose);
   const [status, setStatus] = useState('ready'), [error, setError] = useState('');
   onPoseRef.current = onPose;
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function usePoseDetector(enabled, onPose) {
           if (video.readyState >= 2 && now - lastDetection >= 66) {
             lastDetection = now;
             const landmarks = detector.detectForVideo(video, now).landmarks?.[0] || null;
+            drawPoseLandmarks(canvasRef.current, video, landmarks);
             onPoseRef.current?.(landmarks, now);
           }
           frame = requestAnimationFrame(tick);
@@ -39,12 +41,13 @@ export default function usePoseDetector(enabled, onPose) {
         stream?.getTracks().forEach(track => track.stop());
         detector?.close();
         if (videoRef.current) videoRef.current.srcObject = null;
+        drawPoseLandmarks(canvasRef.current, videoRef.current, null);
         const message = cause.name === 'NotAllowedError' ? 'Camera permission was denied. Allow camera access in your browser settings and try again.' : cause.name === 'NotFoundError' ? 'No camera was found on this device.' : cause.message || 'Could not start camera pose detection. Check your internet connection and try again.';
         setError(message); setStatus('error');
       }
     };
     run();
-    return () => { disposed = true; cancelAnimationFrame(frame); stream?.getTracks().forEach(track => track.stop()); detector?.close(); if (videoRef.current) videoRef.current.srcObject = null; };
+    return () => { disposed = true; cancelAnimationFrame(frame); stream?.getTracks().forEach(track => track.stop()); detector?.close(); if (videoRef.current) videoRef.current.srcObject = null; drawPoseLandmarks(canvasRef.current, videoRef.current, null); };
   }, [enabled]);
-  return { videoRef, status, error };
+  return { videoRef, canvasRef, status, error };
 }

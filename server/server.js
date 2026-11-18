@@ -1,6 +1,53 @@
-import 'dotenv/config';import express from 'express';import cors from 'cors';import connectDB from './config/db.js';import authRoutes from './routes/authRoutes.js';import alarmRoutes from './routes/alarmRoutes.js';import reminderRoutes from './routes/reminderRoutes.js';import insightRoutes from './routes/insightRoutes.js';import userRoutes from './routes/userRoutes.js';import {notFound,errorHandler} from './middleware/errorMiddleware.js';
-const app=express();
-const configuredOrigins=new Set((process.env.CLIENT_URL||'http://localhost:5173,http://localhost:5174').split(',').map(origin=>origin.trim()).filter(Boolean));
-const isLocalDevelopmentOrigin=origin=>{try{const url=new URL(origin),host=url.hostname.replace(/^\[|\]$/g,'');const local=host==='localhost'||host==='127.0.0.1'||host==='::1'||host.startsWith('192.168.')||host.startsWith('10.')||/^172\.(1[6-9]|2\d|3[01])\./.test(host);return url.protocol==='http:'&&['5173','5174'].includes(url.port)&&local}catch{return false}};
-app.use(cors({origin(origin,callback){if(!origin||configuredOrigins.has(origin)||(process.env.NODE_ENV!=='production'&&isLocalDevelopmentOrigin(origin)))return callback(null,true);return callback(new Error('Origin is not allowed by CORS'))}}));app.use(express.json({limit:'1mb'}));app.get('/api/health',(req,res)=>res.json({success:true,data:{status:'ok'}}));app.use('/api/auth',authRoutes);app.use('/api/alarms',alarmRoutes);app.use('/api/reminders',reminderRoutes);app.use('/api/insights',insightRoutes);app.use('/api/users',userRoutes);app.use(notFound);app.use(errorHandler);
-const port=process.env.PORT||5000;connectDB().then(()=>app.listen(port,()=>console.log(`Jagriti API listening on ${port}`))).catch(err=>{console.error(err.message);process.exit(1)});
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import connectDB from './config/db.js';
+import authRoutes from './routes/authRoutes.js';
+import alarmRoutes from './routes/alarmRoutes.js';
+import reminderRoutes from './routes/reminderRoutes.js';
+import insightRoutes from './routes/insightRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+
+const app = express();
+const configuredOrigins = new Set((process.env.CLIENT_URL || '').split(',').map(origin => origin.trim()).filter(Boolean));
+
+function isLocalDevelopmentOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    const host = url.hostname.replace(/^\[|\]$/g, '');
+    const local = host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.startsWith('192.168.') || host.startsWith('10.') || /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+    return url.protocol === 'http:' && ['5173', '5174'].includes(url.port) && local;
+  } catch {
+    return false;
+  }
+}
+
+if (process.env.NODE_ENV === 'production' && !configuredOrigins.size) {
+  throw new Error('CLIENT_URL must contain the production frontend origin in production');
+}
+if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || configuredOrigins.has(origin) || (process.env.NODE_ENV !== 'production' && isLocalDevelopmentOrigin(origin))) return callback(null, true);
+    return callback(new Error('Origin is not allowed by CORS'));
+  }
+}));
+app.use(express.json({ limit: '1mb' }));
+app.get('/api/health', (req, res) => res.json({ success: true, data: { status: 'ok' } }));
+app.use('/api/auth', authRoutes);
+app.use('/api/alarms', alarmRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/insights', insightRoutes);
+app.use('/api/users', userRoutes);
+app.use(notFound);
+app.use(errorHandler);
+
+const port = Number(process.env.PORT) || 5000;
+connectDB()
+  .then(() => app.listen(port, '0.0.0.0', () => console.log(`Jagriti API listening on 0.0.0.0:${port}`)))
+  .catch(error => {
+    console.error(`Unable to start Jagriti API: ${error.message}`);
+    process.exit(1);
+  });
